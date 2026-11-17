@@ -3,14 +3,20 @@
 #include <ArduinoJson.h>
 #include <functional>
 
+#if __has_include("secrets.h")
+#include "secrets.h"            // ค่าจริง (ไม่ขึ้น git)
+#else
+#include "secrets.example.h"    // ค่าตัวอย่าง
+#endif
+
 // ===== แก้ config ตรงนี้ที่เดียว =====
 struct MqttConfig {
-    const char* wifiSsid     = "REDACTED";
-    const char* wifiPass     = "REDACTED";
-    const char* host         = "0.0.0.0";
+    const char* wifiSsid     = SECRET_WIFI_SSID;
+    const char* wifiPass     = SECRET_WIFI_PASS;
+    const char* host         = SECRET_MQTT_HOST;
     uint16_t    port         = 1883;
-    const char* user         = "REDACTED";        // ว่าง = ไม่ใช้ auth
-    const char* pass         = "REDACTED";
+    const char* user         = SECRET_MQTT_USER;        // ว่าง = ไม่ใช้ auth
+    const char* pass         = SECRET_MQTT_PASS;
     const char* baseTopic    = "test";   // topic หลัก
     uint16_t    keepAlive    = 30;        // วินาที
     uint16_t    bufferSize   = 1024;      // ขนาด JSON สูงสุด (byte)
