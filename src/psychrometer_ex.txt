@@ -1,0 +1,18 @@
+#include "Ads1115Input.h"
+#include "Ntc.h"
+#include "Psychrometer.h"
+
+NtcConfig ntc;   // ค่าเริ่มต้น: R=10k, NTC 10k, B=3950, Vcc=3300mV
+
+void setup() {
+    Serial.begin(115200);
+    Ads::begin();                              // SDA=8, SCL=9, 0x48
+}
+
+void loop() {
+    float tDry = Ntc::toCelsius(Ads::readMv(0), ntc);   // A0 = กระเปาะแห้ง
+    float tWet = Ntc::toCelsius(Ads::readMv(1), ntc);   // A1 = กระเปาะเปียก
+    float rh   = Psychro::relativeHumidity(tDry, tWet);
+    Serial.printf("Dry %.2f°C  Wet %.2f°C  RH %.1f%%\n", tDry, tWet, rh);
+    delay(1000);
+}
