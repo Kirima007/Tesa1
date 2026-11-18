@@ -55,8 +55,8 @@ void setup() {
 
     CapConfig cfg;               // ค่าเริ่มต้นอยู่ใน cap_meter.h
     // cfg.r1Ohm  = 998000;      // ใส่ค่าที่วัดจริง
-    cfg.calOffsetPf = -9.2602f;  // จากโหมด calib
-    cfg.calGain     = 0.94597f;  // จากโหมด calib
+    cfg.calOffsetPf = -9.3134f;  // calib 18 พ.ย. (ค่าอ้างอิงจาก LCR) R^2 = 0.99998
+    cfg.calGain     = 0.96213f;  // calib 18 พ.ย. (ค่าอ้างอิงจาก LCR)
     Cap::begin(cfg);
 
     // GPIO1 ใช้เป็น SENSE ของ LM393 แล้ว ห้ามอ่าน analog ขานี้พร้อมกัน

@@ -11,7 +11,7 @@
 #define CAP_SAMPLES  256    // ต้องเท่ากับใน main.cpp (ให้เงื่อนไขเหมือนตอนใช้งานจริง)
 #define CAL_READS    50     // จำนวนครั้งที่อ่านต่อ 1 ตัว (50 × 256 = 12,800 รอบชาร์จ ≈ 40 s)
 
-const float REF_PF[] = { 5, 10, 15, 20 };   // ค่า C อ้างอิง (แก้/เพิ่มได้)
+const float REF_PF[] = { 5.570f, 10.725f, 15.915f, 20.825f };   // ค่าจริงจาก LCR (ตัว 5/10/15/20 pF)
 const int   N_REF    = sizeof(REF_PF) / sizeof(REF_PF[0]);
 
 float g_rawMean[N_REF];
