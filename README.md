@@ -20,7 +20,7 @@ Built by team **TGR-17** for **TESA Top Gun Rally 2026 #20 — Track 1: Precisio
 
 1. A GPIO charges the unknown capacitor `Cx` through `R1 = 1 MΩ`.
 2. The LM393 flips its output when the capacitor voltage `Vc` crosses `Vref` (≈ Vcc/2).
-3. The ESP32 times the charge with the CPU cycle counter (interrupts off), averages 256 charges, then solves the RC equation:
+3. The ESP32 times the charge with the CPU cycle counter (interrupts off), averages 256 charges (300 on day 2), then solves the RC equation:
 
 ```
 Vc(t) = Vcc · (1 − e^(−t/RC))      →      C = t / (R1 · ln(Vcc / (Vcc − Vref)))
@@ -151,7 +151,7 @@ Moisture Level = 11.52 %
 
 ```
 
-The day 1 firmware prints `Capacitance = 12.34 pF` in the same format. Response time is about 0.9 s.
+The day 1 firmware prints `Capacitance = 12.34 pF` in the same format. Response time is about 0.8 s (day 1) and 1 s (day 2).
 
 If no valid reading arrives within 2.5 s, the output is `… = ERROR`.
 
@@ -168,7 +168,7 @@ If no valid reading arrives within 2.5 s, the output is `… = ERROR`.
 
 | Setting | Location | Default |
 |---|---|---|
-| Samples averaged per reading | `CAP_SAMPLES` in `main.cpp` / `calib.cpp` / `moisture.cpp` / `c0.cpp` | 256 |
+| Samples averaged per reading | `CAP_SAMPLES` in `main.cpp` / `calib.cpp` · `moisture.cpp` / `c0.cpp` (keep these two equal) | 256 · 300 |
 | R1, Vcc, Vref, timeout, discharge time | `CapConfig` in [include/cap_meter.h](include/cap_meter.h) | 1 MΩ, 3.3 V, 1.65 V, 5 ms, 3 ms |
 | Meter gain / offset | `main.cpp`, `moisture.cpp`, `c0.cpp` | from the `calib` run |
 | Empty-box capacitance | `C0_PF` in `moisture.cpp` | from the `c0` run |

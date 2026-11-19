@@ -16,7 +16,7 @@
 #define PIN_START     2          // ปุ่ม START: pull-up ภายนอก, ปกติ HIGH, กด = LOW
 #define PIN_LED       48         // RGB LED บนบอร์ด (WS2812)
 #define LED_MS        200        // LED สว่าง 200 ms ทุกครั้งที่กด
-#define CAP_SAMPLES   256        // จำนวนรอบชาร์จที่เอามาเฉลี่ยต่อ 1 ค่า (เท่ากับ main / calib)
+#define CAP_SAMPLES   300        // จำนวนรอบชาร์จที่เอามาเฉลี่ยต่อ 1 ค่า (≈0.9 s ต่อครั้ง / main, calib ใช้ 256)
 #define PRESS_MS      5          // ต้องเป็น LOW ต่อเนื่องเท่านี้ถึงนับว่ากด
 #define RELEASE_MS    50         // ต้องปล่อยปุ่มนานเท่านี้ถึงรับการกดครั้งถัดไป
 #define RETRY_MS      2500       // วัดไม่ได้ → ลองใหม่จนถึงเวลานี้

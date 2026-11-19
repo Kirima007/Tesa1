@@ -10,7 +10,7 @@
 #define PIN_START     2          // ปุ่ม START: pull-up ภายนอก, ปกติ HIGH, กด = LOW
 #define PIN_LED       48         // RGB LED บนบอร์ด (WS2812)
 #define LED_MS        200
-#define CAP_SAMPLES   256        // ต้องเท่ากับ moisture.cpp
+#define CAP_SAMPLES   300        // ต้องเท่ากับ moisture.cpp
 #define PRESS_MS      5
 #define RELEASE_MS    50
 
