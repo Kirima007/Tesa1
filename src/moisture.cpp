@@ -29,12 +29,12 @@
 #define CAL_OFFSET    -9.3134f
 
 // ---- εr ----
-#define C0_PF         12.781f    // C กล่องเปล่า (pF) calib 19 พ.ย. 08:23 / วันแข่งวัดใหม่แล้วแก้ค่านี้
-#define C_STRAY_PF    0.0f       // C สาย (pF) ถ้าไม่รู้ใส่ 0 ได้
+#define C0_PF         13.422f    // C กล่องเปล่า (pF) วัดด้วย env c0 19 พ.ย. (calib ตอน 08:23 ใช้ 12.781) / วันแข่งวัดใหม่แล้วแก้ค่านี้
+#define C_STRAY_PF    0.0f       // C สาย (pF) ถ้าไม่รู้ใส่ 0 ได้ / ถ้าเปลี่ยนต้องคิด CAL_ER ใหม่ด้วย
 
 // ---- จุดปรับเทียบความชื้น: εr คู่กับความชื้นของถุง (%) เรียงจากน้อยไปมาก ----
 #define CAL_N         3
-const float CAL_ER[CAL_N] = { 1.5060f, 2.1599f, 2.5219f };   // calib 19 พ.ย. 08:23–08:34 (data/moisture_cal_2026-11-19.csv)
+const float CAL_ER[CAL_N] = { 1.5060f, 2.1599f, 2.5219f };   // calib 19 พ.ย. 08:23–08:34 ด้วย C_STRAY 0 (data/moisture_cal_2026-11-19.csv)
 const float CAL_MC[CAL_N] = { 6.9f, 11.5f, 14.4f };
 #define FIT_MODE      1          // 0 = เส้นตรงเดียว (least squares), 1 = เส้นตรงต่อจุด (หลายท่อน) ← ใช้อันนี้
 
