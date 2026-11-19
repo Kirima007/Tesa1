@@ -10,7 +10,9 @@
 #define PIN_START     2          // ปุ่ม START: pull-up ภายนอก, ปกติ HIGH, กด = LOW
 #define PIN_LED       48         // RGB LED บนบอร์ด (WS2812)
 #define LED_MS        200
-#define CAP_SAMPLES   300        // ต้องเท่ากับ moisture.cpp
+#define CAP_SAMPLES   500       // ต้องเท่ากับ moisture.cpp
+#define CAP_BLOCKS    5          // ต้องเท่ากับ moisture.cpp: แบ่งเป็นกี่ชุด ทิ้งสูงสุด+ต่ำสุด เฉลี่ยที่เหลือ
+#define MAD_K         3.5f       // ต้องเท่ากับ moisture.cpp: ในชุด ตัดรอบที่ห่าง median เกิน MAD_K × σ / 0 = ไม่ตัด
 #define PRESS_MS      5
 #define RELEASE_MS    50
 
@@ -31,8 +33,10 @@ void ledFlash() {
     esp_timer_start_once(g_ledTimer, LED_MS * 1000);
 }
 
+CapRobust g_rob;                 // วิธีเดียวกับ moisture.cpp: Cap::read2 (MAD ในชุด + ทิ้งชุดสูงสุด/ต่ำสุด)
+
 void measure() {
-    CapReading r = Cap::read(CAP_SAMPLES);
+    CapReading r = Cap::read2(CAP_SAMPLES, CAP_BLOCKS, MAD_K, &g_rob);
     if (isnan(r.pF)) {
         Serial.printf("!! วัดไม่ได้ (valid %u/%u) ครั้งนี้ไม่นับ\n\n", r.valid, r.samples);
         return;
@@ -47,6 +51,10 @@ void measure() {
     float sd = g_n > 1 ? sqrtf(g_q / (g_n - 1)) : 0;
 
     Serial.printf("ครั้งที่ %d: C = %.3f pF\n", g_n, r.pF);
+    Serial.print("  ทีละชุด (เรียงแล้ว):");
+    for (int i = 0; i < g_rob.blocks; i++) Serial.printf(" %.3f", g_rob.blkPf[i]);
+    Serial.printf("  ห่างสุด %.3f pF  MAD ตัดทิ้ง %u/%u รอบ\n",
+                  g_rob.blkPf[g_rob.blocks - 1] - g_rob.blkPf[0], g_rob.clipped, r.samples);
     Serial.printf("เฉลี่ย %d ครั้ง = %.3f pF, SD %.3f, ต่ำสุด %.3f, สูงสุด %.3f\n",
                   g_n, g_mean, sd, g_min, g_max);
     Serial.printf("#define C0_PF         %.3ff\n\n", g_mean);

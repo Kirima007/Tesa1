@@ -16,20 +16,24 @@
 #define PIN_START     2          // ปุ่ม START: pull-up ภายนอก, ปกติ HIGH, กด = LOW
 #define PIN_LED       48         // RGB LED บนบอร์ด (WS2812)
 #define LED_MS        200        // LED สว่าง 200 ms ทุกครั้งที่กด
-#define CAP_SAMPLES   300        // จำนวนรอบชาร์จที่เอามาเฉลี่ยต่อ 1 ค่า (≈0.9 s ต่อครั้ง / main, calib ใช้ 256)
-#define PRESS_MS      5          // ต้องเป็น LOW ต่อเนื่องเท่านี้ถึงนับว่ากด
+#define CAP_SAMPLES   500        // จำนวนรอบชาร์จที่เอามาเฉลี่ยต่อ 1 ค่า (≈1.5 s ต่อครั้ง / main, calib ใช้ 256)
+#define CAP_BLOCKS    5          // แบ่งเป็นกี่ชุด แล้วทิ้งชุดสูงสุด+ต่ำสุด เฉลี่ยที่เหลือ (ตัดชุดที่โดนรบกวน) / 1 = ไม่ตัดชุด
+#define MAD_K         3.5f       // ในแต่ละชุด ตัดรอบที่ห่าง median เกิน MAD_K × σ(MAD) / 0 = ไม่ตัด
+                                 // CAP_BLOCKS 1 + MAD_K 0 = เฉลี่ยตรงๆ แบบเดิม
+#define PRESS_MS      5         // ต้องเป็น LOW ต่อเนื่องเท่านี้ถึงนับว่ากด
 #define RELEASE_MS    50         // ต้องปล่อยปุ่มนานเท่านี้ถึงรับการกดครั้งถัดไป
 #define RETRY_MS      2500       // วัดไม่ได้ → ลองใหม่จนถึงเวลานี้
 
 #define COLLECT       0          // 1 = โหมดเก็บค่า (พิมพ์ RAW + บอกขั้นตอน) / ส่งงานต้องเป็น 0
 #define COLLECT_N     6          // จำนวนครั้งต่อ 1 ตัวอย่าง (เทใหม่ทุกครั้ง)
+#define SHOW_TIME     0          // 1 = พิมพ์เวลาตอบสนอง (กดปุ่ม → ส่งผลครบ) ต่อท้ายผล / ส่งงานต้องเป็น 0
 
 // ---- ปรับเทียบเครื่องวัด C (ค่าเดียวกับ main.cpp) ----
 #define CAL_GAIN      0.96213f
 #define CAL_OFFSET    -9.3134f
 
 // ---- εr ----
-#define C0_PF         13.422f    // C กล่องเปล่า (pF) วัดด้วย env c0 19 พ.ย. (calib ตอน 08:23 ใช้ 12.781) / วันแข่งวัดใหม่แล้วแก้ค่านี้
+#define C0_PF         13.384f    // C กล่องเปล่า (pF) วัดด้วย env c0 19 พ.ย. (calib ตอน 08:23 ใช้ 12.781) / วันแข่งวัดใหม่แล้วแก้ค่านี้
 #define C_STRAY_PF    0.0f       // C สาย (pF) ถ้าไม่รู้ใส่ 0 ได้ / ถ้าเปลี่ยนต้องคิด CAL_ER ใหม่ด้วย
 
 // ---- จุดปรับเทียบความชื้น: εr คู่กับความชื้นของถุง (%) เรียงจากน้อยไปมาก ----
@@ -190,16 +194,34 @@ void collect(const CapReading& r) {
 }
 #endif
 
-void measure() {
+CapRobust g_rob;                                    // รายละเอียดการวัดล่าสุด (ไว้ดูตอน SHOW_TIME)
+
+void measure(uint32_t pressedAt) {
     uint32_t t0 = millis();
     CapReading r;
+    int tries = 0;
     do {
-        r = Cap::read(CAP_SAMPLES);
+        r = Cap::read2(CAP_SAMPLES, CAP_BLOCKS, MAD_K, &g_rob);
+        tries++;
     } while (isnan(r.pF) && millis() - t0 < RETRY_MS);
+#if SHOW_TIME
+    uint32_t tRead = millis();
+#endif
 
     Serial.println("\"" TEAM_ID "\"");
     if (isnan(r.pF)) Serial.println("Moisture Level = ERROR");
     else             Serial.printf("Moisture Level = %.2f %%\n", erToMoisture(toEr(r.pF)));
+#if SHOW_TIME
+    Serial.flush();                                  // รอส่งออกสายครบ (9600 baud ≈ 1 ms/ตัวอักษร)
+    uint32_t tDone = millis();
+    Serial.printf("[time] response %lu ms = กด→เริ่มวัด %lu + วัด %lu (%d ครั้ง) + ส่ง Serial %lu\n",
+                  (unsigned long)(tDone - pressedAt), (unsigned long)(t0 - pressedAt),
+                  (unsigned long)(tRead - t0), tries, (unsigned long)(tDone - tRead));
+    Serial.print("[blocks] pF ทีละชุด (เรียงแล้ว):");
+    for (int i = 0; i < g_rob.blocks; i++) Serial.printf(" %.3f", g_rob.blkPf[i]);
+    if (g_rob.blocks) Serial.printf("  ห่างสุด %.3f pF", g_rob.blkPf[g_rob.blocks - 1] - g_rob.blkPf[0]);
+    Serial.printf("  MAD ตัดทิ้ง %u/%u รอบ\n", g_rob.clipped, r.samples);
+#endif
 #if COLLECT
     collect(r);
 #else
@@ -242,7 +264,7 @@ void loop() {
         if (armed && now - lowSince >= PRESS_MS) {
             armed = false;
             ledFlash();
-            measure();
+            measure(lowSince);
         }
     } else {
         lowSince = 0;

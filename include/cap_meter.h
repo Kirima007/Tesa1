@@ -25,6 +25,14 @@ struct CapReading {
     uint16_t samples;  // จำนวนรอบที่สั่ง
 };
 
+// รายละเอียดของ readRobust() ไว้ดู/debug
+#define CAP_MAX_BLOCKS 16
+struct CapRobust {
+    uint8_t  blocks;                    // จำนวนชุดที่ใช้ได้
+    float    blkPf[CAP_MAX_BLOCKS];     // pF แต่ละชุด เรียงน้อย → มาก
+    uint16_t clipped;                   // จำนวนรอบที่ถูก MAD ตัดทิ้ง (รวมทุกชุด)
+};
+
 namespace Cap {
     void       begin(const CapConfig& cfg = CapConfig());
     CapConfig& config();                       // แก้ค่าระหว่างทำงานได้
@@ -33,4 +41,10 @@ namespace Cap {
     float      chargeTimeOnceUs();             // ชาร์จ 1 ครั้ง (µs), -1 = ล้มเหลว
     float      timeToPf(float timeUs);         // แปลงเวลา → pF (ยังไม่ปรับเทียบ)
     CapReading read(uint16_t samples = 32);    // ชาร์จ samples ครั้งแล้วเฉลี่ย
+
+    // ตัดค่าผิดปกติ 2 ชั้น: แบ่ง samples เป็น blocks ชุด
+    //   ชั้น 1 (ในชุด): ตัดรอบที่ห่าง median เกิน madK × 1.4826 × MAD แล้วเฉลี่ย (madK 0 = ไม่ตัด)
+    //   ชั้น 2 (ข้ามชุด): ทิ้งชุดสูงสุด + ต่ำสุด เฉลี่ยชุดที่เหลือ (ต้องมี ≥ 3 ชุด)
+    // ชุดใช้ได้ไม่เกินครึ่ง → pF = NAN
+    CapReading read2(uint16_t samples, uint8_t blocks, float madK, CapRobust* info = nullptr);
 }
